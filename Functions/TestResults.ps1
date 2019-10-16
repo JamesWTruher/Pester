@@ -538,6 +538,10 @@ function Write-NUnitTestCaseAttributes($TestResult, [System.Xml.XmlWriter] $XmlW
     $XmlWriter.WriteAttributeString('asserts', '0')
     $XmlWriter.WriteAttributeString('success', $TestResult.Passed)
 
+    # PowerShell has added VT100 escape sequences to the error messages which cause the xml serialization
+    # to fail catastrophically. We will replace the escape with '`e' which should protect us from
+    # the failure. We can't excise the escape sequence because there's no good pattern we can use to
+    # remove an arbitrary escape sequence (although we could probably do ok with just colors).
     switch ($TestResult.Result) {
         Passed {
             $XmlWriter.WriteAttributeString('result', 'Success')
@@ -552,7 +556,7 @@ function Write-NUnitTestCaseAttributes($TestResult, [System.Xml.XmlWriter] $XmlW
 
             if ($TestResult.FailureMessage) {
                 $XmlWriter.WriteStartElement('reason')
-                $xmlWriter.WriteElementString('message', $TestResult.FailureMessage)
+                $xmlWriter.WriteElementString('message', $TestResult.FailureMessage -replace ([char]27),'`e')
                 $XmlWriter.WriteEndElement() # Close reason tag
             }
 
@@ -565,7 +569,7 @@ function Write-NUnitTestCaseAttributes($TestResult, [System.Xml.XmlWriter] $XmlW
 
             if ($TestResult.FailureMessage) {
                 $XmlWriter.WriteStartElement('reason')
-                $xmlWriter.WriteElementString('message', $TestResult.FailureMessage)
+                $xmlWriter.WriteElementString('message', $TestResult.FailureMessage -replace ([char]27),'`e')
                 $XmlWriter.WriteEndElement() # Close reason tag
             }
 
@@ -578,7 +582,7 @@ function Write-NUnitTestCaseAttributes($TestResult, [System.Xml.XmlWriter] $XmlW
 
             if ($TestResult.FailureMessage) {
                 $XmlWriter.WriteStartElement('reason')
-                $xmlWriter.WriteElementString('message', $TestResult.FailureMessage)
+                $xmlWriter.WriteElementString('message', $TestResult.FailureMessage -replace ([char]27),'`e')
                 $XmlWriter.WriteEndElement() # Close reason tag
             }
 
@@ -588,7 +592,7 @@ function Write-NUnitTestCaseAttributes($TestResult, [System.Xml.XmlWriter] $XmlW
             $XmlWriter.WriteAttributeString('result', 'Failure')
             $XmlWriter.WriteAttributeString('executed', 'True')
             $XmlWriter.WriteStartElement('failure')
-            $xmlWriter.WriteElementString('message', $TestResult.FailureMessage)
+            $xmlWriter.WriteElementString('message', $TestResult.FailureMessage -replace ([char]27),'`e')
             $XmlWriter.WriteElementString('stack-trace', $TestResult.StackTrace)
             $XmlWriter.WriteEndElement() # Close failure tag
             break
