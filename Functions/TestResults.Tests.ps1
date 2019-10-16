@@ -40,6 +40,23 @@ InModuleScope Pester {
                 $xmlTestCase.failure.'stack-trace' | Should -Be 'at line: 28 in  C:\Pester\Result.Tests.ps1'
             }
 
+            It "should write a failed test result with VT100 code in the message" {
+            wait-debugger
+                #create state
+                $TestResults = New-PesterState -Path TestDrive:\
+                $testResults.EnterTestGroup('Mocked Describe', 'Describe')
+                $time = [TimeSpan]25000000 #2.5 seconds
+                $redForeground = "$([char]27)[31m"
+                $resetForeground = "$([char]27)[0m"
+                $TestResults.AddTestResult("Failed testcase", 'Failed', $time, "Assert failed: ""Expected: ${redForeground}Test${resetForeground}. But was: Testing""", 'at line: 28 in  C:\Pester\Result.Tests.ps1')
+
+                #export and validate the file, if we can roundtrip the file, we are good
+                [String]$testFile = "$TestDrive{0}Results{0}Vt100Tests.xml" -f [System.IO.Path]::DirectorySeparatorChar
+                Export-XmlReport $testResults $testFile 'NUnitXml'
+                $xmlResult = [xml] (Get-Content $testFile)
+                $xmlResult | Should -BeOfType ([xml])
+            }
+
             It "should log the reason for a skipped test when provided" {
                 $message = "skipped for reasons"
                 $TestResults = New-PesterState -Path TestDrive:\
